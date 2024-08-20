@@ -17,16 +17,18 @@ class PreprocessWinoBias:
         self.keys_to_swap = keys_to_swap
 
     def clean(self):
-        swapped_dict = self._swap_keys_values(self.dictionary, self.keys_to_swap)
-        unique_dict = self._remove_duplicates(swapped_dict)
-        self.df = self._dict_to_dataframe(unique_dict)
+        unique_dict = self._remove_duplicates(self.dictionary)
+        swapped_dict = self._swap_keys_values(unique_dict, self.keys_to_swap)
+        self.df = self._dict_to_dataframe(swapped_dict)
         self.df = self._melt_and_more()
         return self.df
     
     def _normalize_pair(self, pair):
+        """Return a canonical form of the pair (sorted tuple)."""
         return tuple(sorted(pair))
 
     def _remove_duplicates(self, d):
+        """Remove duplicates from the dictionary considering swapped pairs."""
         normalized = set()
         unique_dict = {}
 
@@ -39,6 +41,7 @@ class PreprocessWinoBias:
         return unique_dict
 
     def _swap_keys_values(self, d, keys_to_swap):
+        """Swap key-value pairs in the dictionary for specific keys."""
         result = dict(d)
         swap_pairs = {}
 
@@ -89,7 +92,8 @@ class PreprocessJobs():
         job_df = job_df[job_df.n_tokens==1].reset_index(drop=True)
         job_df.drop_duplicates(subset="job_title_clean", inplace=True)
         
-        job_df = job_df[job_df['job_title_clean'].str.len() > 3].reset_index(drop=True)
+        job_df['job_title_clean'].replace(' ', '', inplace=True)
+        job_df = job_df[job_df['job_title_clean'].str.len() >= 4].reset_index(drop=True)
         job_df.reset_index(drop=True, inplace=True)
         
         return job_df
@@ -116,7 +120,8 @@ keys_to_swap = [
     'lady',
     "ma'am",
     'miss',
-    'ms.'
+    'ms.',
+    
     ]
 
 gendered_words = pd.read_csv(os.path.join(EXTERNAL_DATA_DIR, 'gendered_words.txt'), header=None, sep='\t')
@@ -153,5 +158,8 @@ df_jobs = preprocess.clean()
 
 df_jobs.to_csv(os.path.join(INTERIM_DATA_DIR, 'jobs.csv'), index=False, sep="|")
 
+
+# %%
+df_jobs[df_jobs['job_title_clean'].str.len() < 5]
 
 # %%
