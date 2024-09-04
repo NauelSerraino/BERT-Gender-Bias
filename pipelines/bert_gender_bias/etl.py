@@ -61,8 +61,8 @@ class BertEmbeddingsPipeline:
         self.interim_data_dir = INTERIM_DATA_DIR
         self.gender_binary_path_input = os.path.join(self.interim_data_dir, '00_gender_binary_words.csv')
         self.occupations_path_input = os.path.join(self.interim_data_dir, '00_occupations.csv')
-        self.gender_binary_path_output = os.path.join(self.interim_data_dir, '01_gender_binary_words.csv')
-        self.occupations_path_output = os.path.join(self.interim_data_dir, '01_occupations.csv')
+        self.gender_binary_path_output = os.path.join(self.interim_data_dir, '01_gender_binary_words.pkl')
+        self.occupations_path_output = os.path.join(self.interim_data_dir, '01_occupations.pkl')
         
         self.gender_binary = None
         self.occupations = None
@@ -94,4 +94,4 @@ class BertEmbeddingsPipeline:
         return df
 
     def _save_embeddings(self, df, path):
-        df.to_csv(path, index=False, sep="|")
+        df.to_pickle(path)
