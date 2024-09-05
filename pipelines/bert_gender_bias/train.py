@@ -1,4 +1,6 @@
+from matplotlib import pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
@@ -8,7 +10,7 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.model_selection import GridSearchCV
 
 class FeatureSelectionPipeline:
-    def __init__(self, n_pca_components=2, cv=10, scoring='accuracy', verbose=3):
+    def __init__(self, n_pca_components=2, cv=5, scoring='accuracy', verbose=3):
         self.n_pca_components = n_pca_components
         self.cv = cv
         self.scoring = scoring
@@ -21,20 +23,16 @@ class FeatureSelectionPipeline:
         self.num_selected_features = None
 
     def fit(self, X, y):       
-        X = np.array([np.array(xi) for xi in X])
-            
-        print(f"shape of X: {X.shape}")
-        print(f"shape of y: {y.shape}")
-        print(f"shape of x[0]: {X[0].shape}")
+        X = np.array([np.array(xi) for xi in X]) #TODO: this makes the X in the proper format, but you should be able to save the pkl directly with the proper format 
             
         self.pipeline = Pipeline([
             ('feature_selection', SelectFromModel(LogisticRegression(penalty='l1', solver='liblinear'))),
             ('pca', PCA(n_components=self.n_pca_components)),
-            ('svm', SVC())
+            ('svm', SVC(kernel='linear'))
         ])
 
         param_grid = {
-            'feature_selection__estimator__C': np.logspace(-2, 2, 100),
+            'feature_selection__estimator__C': np.arange(0.1, 1, 0.01),
         }
 
         self.grid_search = GridSearchCV(
@@ -51,14 +49,60 @@ class FeatureSelectionPipeline:
         self.best_score_ = self.grid_search.best_score_
         selected_features_mask = self.best_pipeline.named_steps['feature_selection'].get_support()
         self.num_selected_features = selected_features_mask.sum()
-
+        
+        pre_transformed_X = self.best_pipeline.named_steps['feature_selection'].transform(X)
+        self.principal_components = self.best_pipeline.named_steps['pca'].transform(pre_transformed_X)
+        
     def get_results(self):
         return {
             "Best Parameters": self.best_params_,
             "Best Accuracy": self.best_score_,
             "Number of Selected Features": self.num_selected_features
         }
+    
+    def export_accuracy_cv_results(self):
+        cv_results = self.grid_search.cv_results_
+        cv_results_df = pd.DataFrame(cv_results)
+        return cv_results_df
         
+    def export_pca_components(self, y):
+        pcs = self.principal_components
+        pcs_df = pd.DataFrame(pcs)
+        pcs_df.columns = ['PC1', 'PC2']
+        pcs_df['target'] = y
+        return pcs_df
+    
+    def plot_svm_decision_boundary(self, y):
+        pcs = self.principal_components
+        h = .02  # step size in the mesh
+
+        x_min, x_max = pcs[:, 0].min() - 1, pcs[:, 0].max() + 1
+        y_min, y_max = pcs[:, 1].min() - 1, pcs[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                             np.arange(y_min, y_max, h))
+
+        Z = self.best_pipeline.named_steps['svm'].predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+
+        plt.figure(figsize=(10, 6))
+        plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.8)
+
+        colors = ['blue', 'pink']
+        alpha = 0.8
+        for i, color in enumerate(colors):
+            plt.scatter(
+                pcs[y == i, 0], 
+                pcs[y == i, 1], 
+                color=color, 
+                alpha=alpha
+            )
+        
+        plt.xlabel('PC1')
+        plt.ylabel('PC2')
+        plt.title('SVM Decision Boundary with PCA Components')
+        plt.legend(['0=Male', '1=Female'])
+        plt.grid(True)
+        plt.show()
 
 # Example usage with some data (replace with your own data)
 if __name__ == "__main__":

@@ -90,7 +90,8 @@ class BertEmbeddingsPipeline:
         embeddings = output.last_hidden_state
         word_embeddings = embeddings.mean(dim=1).numpy()
         
-        df['bert_token'] = list(word_embeddings)
+        # df['bert_token'] = list(word_embeddings)
+        df['bert_token'] = list(map(lambda x: x.tolist(), word_embeddings))
         return df
 
     def _save_embeddings(self, df, path):
