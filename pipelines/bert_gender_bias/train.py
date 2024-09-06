@@ -28,11 +28,12 @@ class FeatureSelectionPipeline:
         self.pipeline = Pipeline([
             ('feature_selection', SelectFromModel(LogisticRegression(penalty='l1', solver='liblinear'))),
             ('pca', PCA(n_components=self.n_pca_components)),
-            ('svm', SVC(kernel='linear'))
+            ('svm', SVC(kernel='linear', probability=True))
         ])
 
         param_grid = {
-            'feature_selection__estimator__C': np.arange(0.1, 1, 0.01),
+            'feature_selection__estimator__C': np.arange(0.1, 0.5, 0.1),
+            'svm__C': np.arange(0.1, 0.5, 0.1)
         }
 
         self.grid_search = GridSearchCV(
@@ -103,19 +104,44 @@ class FeatureSelectionPipeline:
         plt.legend(['0=Male', '1=Female'])
         plt.grid(True)
         plt.show()
+        
+    def predict(self, df):
+        """
+        Returns the predictions of the best pipeline on the given df.
+        """
+        bert_embeddings = np.array(df['bert_token'].tolist())
+        predictions = self.best_pipeline.predict(bert_embeddings)
+        probabilities = self.best_pipeline.predict_proba(bert_embeddings)
+        
+        prob_male = probabilities[:, 0]
+        prob_female = probabilities[:, 1]
+        
+        data = {
+        "Words": df['word'],
+        "Predictions": predictions,
+        "Probability_Male": prob_male,
+        "Probability_Female": prob_female
+        }
+        
+        if 'gender_binary' in df.columns:
+            data['Target'] = df['gender_binary']
+        
+        pred_df = pd.DataFrame(data)
+        
+        return pred_df
 
 # Example usage with some data (replace with your own data)
-if __name__ == "__main__":
-    # X, y = make_classification(n_samples=500, n_features=700, n_informative=10, n_classes=2, random_state=42)
-    X = np.random.rand(515, 768)  # Replace with actual data
-    y = np.random.randint(0, 2, size=515) 
+# if __name__ == "__main__":
+#     # X, y = make_classification(n_samples=500, n_features=700, n_informative=10, n_classes=2, random_state=42)
+#     X = np.random.rand(515, 768)  # Replace with actual data
+#     y = np.random.randint(0, 2, size=515) 
 
-    # Initialize the custom pipeline class
-    pipeline = FeatureSelectionPipeline()
+#     # Initialize the custom pipeline class
+#     pipeline = FeatureSelectionPipeline()
 
-    # Fit the pipeline to the data
-    pipeline.fit(X, y)
+#     # Fit the pipeline to the data
+#     pipeline.fit(X, y)
 
-    # Retrieve and print the results
-    results = pipeline.get_results()
-    print(results)
+#     # Retrieve and print the results
+#     results = pipeline.get_results()
+#     print(results)
