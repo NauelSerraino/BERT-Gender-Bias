@@ -12,4 +12,5 @@ OUTPUT_DIR = os.path.join(ROOT_DIR, 'output')
 FEATURES_MODEL_DIR = os.path.join(OUTPUT_DIR, 'features')
 MODELS_DIR = os.path.join(OUTPUT_DIR, 'models')
 REPORTS_DIR = os.path.join(OUTPUT_DIR, 'reports')
+FIGURES_DIR = os.path.join(OUTPUT_DIR, 'reports', 'figures')
 

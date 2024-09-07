@@ -1,6 +1,8 @@
 from matplotlib import pyplot as plt
+import os
 import numpy as np
 import pandas as pd
+import joblib
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
@@ -8,6 +10,9 @@ from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
 from sklearn.model_selection import GridSearchCV
+
+
+from utils.paths import FIGURES_DIR, MODELS_DIR
 
 class FeatureSelectionPipeline:
     def __init__(self, n_pca_components=2, cv=5, scoring='accuracy', verbose=3):
@@ -32,8 +37,8 @@ class FeatureSelectionPipeline:
         ])
 
         param_grid = {
-            'feature_selection__estimator__C': np.arange(0.1, 0.5, 0.1),
-            'svm__C': np.arange(0.1, 0.5, 0.1)
+            'feature_selection__estimator__C': np.arange(0.1, 0.5, 0.025),
+            'svm__C': np.arange(0.1, 0.5, 0.025)
         }
 
         self.grid_search = GridSearchCV(
@@ -44,12 +49,14 @@ class FeatureSelectionPipeline:
             verbose=self.verbose
             )
         self.grid_search.fit(X, y)
-
+        
         self.best_pipeline = self.grid_search.best_estimator_
         self.best_params_ = self.grid_search.best_params_
         self.best_score_ = self.grid_search.best_score_
         selected_features_mask = self.best_pipeline.named_steps['feature_selection'].get_support()
         self.num_selected_features = selected_features_mask.sum()
+        
+        self._save_model()
         
         pre_transformed_X = self.best_pipeline.named_steps['feature_selection'].transform(X)
         self.principal_components = self.best_pipeline.named_steps['pca'].transform(pre_transformed_X)
@@ -103,6 +110,7 @@ class FeatureSelectionPipeline:
         plt.title('SVM Decision Boundary with PCA Components')
         plt.legend(['0=Male', '1=Female'])
         plt.grid(True)
+        plt.savefig(os.path.join(FIGURES_DIR, 'svm_decision_boundary.png'))
         plt.show()
         
     def predict(self, df):
@@ -130,6 +138,19 @@ class FeatureSelectionPipeline:
         
         return pred_df
 
+    def _save_model(self):
+        
+        joblib.dump(self.best_pipeline, os.path.join(MODELS_DIR, 'best_pipeline.pkl'))
+        joblib.dump({
+            'best_params': self.best_params_,
+            'best_score': self.best_score_,
+            'num_selected_features': self.num_selected_features,
+            'accuracy_cv_results': self.grid_search.cv_results_,
+            'best_accuracy_cv_results': self.grid_search.best_score_,
+            'C_svc': self.best_params_['svm__C'],
+            'C_logit': self.best_params_['feature_selection__estimator__C']
+        }, os.path.join(MODELS_DIR, 'best_pipeline_metadata.pkl'))
+        
 # Example usage with some data (replace with your own data)
 # if __name__ == "__main__":
 #     # X, y = make_classification(n_samples=500, n_features=700, n_informative=10, n_classes=2, random_state=42)

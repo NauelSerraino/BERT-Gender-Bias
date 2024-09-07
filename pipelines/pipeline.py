@@ -10,7 +10,7 @@ sys.path.append('/home/nauel/bert_gender_bias')
 from pipelines.bert_gender_bias.train import FeatureSelectionPipeline
 from pipelines.bert_gender_bias.etl import PreProcessPipeline, BertEmbeddingsPipeline
 
-from utils.paths import EXTERNAL_DATA_DIR, FINAL_DATA_DIR, INTERIM_DATA_DIR
+from utils.paths import EXTERNAL_DATA_DIR, FINAL_DATA_DIR, INTERIM_DATA_DIR, FIGURES_DIR
 import torch
 
 
@@ -60,6 +60,7 @@ class GenderBiasPipeline():
         
         fig.tight_layout()
         ax1.grid(True)
+        plt.savefig(os.path.join(FIGURES_DIR, 'cv_result.png'))
         plt.show()
         
     def _plot_pca_with_target(self, pca_df):
@@ -78,6 +79,7 @@ class GenderBiasPipeline():
         plt.title('PCA with Gender Target')
         plt.legend(['0=Male', '1=Female'])
         plt.grid(True, which='both', linestyle='--', lw=0.5)
+        plt.savefig(os.path.join(FIGURES_DIR, 'pca_with_target.png'))
         plt.show()
 
 
