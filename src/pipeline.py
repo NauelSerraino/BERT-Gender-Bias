@@ -1,17 +1,13 @@
-from gensim.models import KeyedVectors
 import pandas as pd
 import os
-import numpy as np
 import matplotlib.pyplot as plt
-from transformers import BertTokenizer, BertModel
 
 import sys
-sys.path.append('/home/nauel/bert_gender_bias')
+sys.path.append('/home/nauel/bert_gender_bias') #TODO: change this to your path
 from src.bert_gender_bias.train import FeatureSelectionPipeline
 from src.bert_gender_bias.etl import PreProcessPipeline, BertEmbeddingsPipeline
 
-from utils.paths import EXTERNAL_DATA_DIR, FINAL_DATA_DIR, INTERIM_DATA_DIR, FIGURES_DIR
-import torch
+from utils.paths import FINAL_DATA_DIR, INTERIM_DATA_DIR, FIGURES_DIR
 
 
 class GenderBiasPipeline():
@@ -21,8 +17,8 @@ class GenderBiasPipeline():
         self.feat_selection = FeatureSelectionPipeline(cv=5)
         
     def run(self):
-        # self.preprocess.run()
-        # self.bert_embeddings.run()
+        self.preprocess.run()
+        self.bert_embeddings.run()
         self._get_x_y('01_gender_binary_words.pkl')
         self.feat_selection.fit(self.X, self.y)
         results = self.feat_selection.get_results()

@@ -3,7 +3,6 @@ import os
 import numpy as np
 import pandas as pd
 import joblib
-from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
@@ -151,18 +150,3 @@ class FeatureSelectionPipeline:
             'C_logit': self.best_params_['feature_selection__estimator__C']
         }, os.path.join(MODELS_DIR, 'best_pipeline_metadata.pkl'))
         
-# Example usage with some data (replace with your own data)
-# if __name__ == "__main__":
-#     # X, y = make_classification(n_samples=500, n_features=700, n_informative=10, n_classes=2, random_state=42)
-#     X = np.random.rand(515, 768)  # Replace with actual data
-#     y = np.random.randint(0, 2, size=515) 
-
-#     # Initialize the custom pipeline class
-#     pipeline = FeatureSelectionPipeline()
-
-#     # Fit the pipeline to the data
-#     pipeline.fit(X, y)
-
-#     # Retrieve and print the results
-#     results = pipeline.get_results()
-#     print(results)
