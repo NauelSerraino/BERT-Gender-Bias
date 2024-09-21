@@ -19,5 +19,3 @@ Performance Metrics:
 | C (SVM)                                  | 0.375      |
 | Accuracy                                 | 0.7786     |
 | Number of Selected Features (pre-PCA)    | 38         |
-
-You can play around with the tool and testing how much biased is a certain word by running the notebook `notebooks/word_bias.ipynb`.
